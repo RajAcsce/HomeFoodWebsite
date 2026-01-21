@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            padding: 40px;
+        }
+
+        .invoice-card {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid #eee;
+            padding: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            margin: 5px 0;
+            color: #666;
+        }
+
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .totals {
+            text-align: right;
+            margin-top: 20px;
+        }
+
+        .totals p {
+            margin: 5px 0;
+            font-size: 1.1rem;
+        }
+
+        .grand-total {
+            font-weight: 800;
+            font-size: 1.4rem;
+            border-top: 2px solid #333;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .words {
+            margin-top: 20px;
+            font-style: italic;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .summary-stats {
+            display: flex;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                padding: 0;
+            }
+
+            .invoice-card {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="invoice-card">
+        <div class="header" id="invoice-header">
+            <h1>INVOICE</h1>
+            <p>Loading...</p>
+        </div>
+
+        <div class="meta" id="invoice-meta"></div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>ITEM</th>
+                    <th>QTY</th>
+                    <th>PRICE</th>
+                    <th style="text-align:right">AMOUNT</th>
+                </tr>
+            </thead>
+            <tbody id="invoice-items"></tbody>
+        </table>
+
+        <div class="summary-stats" id="invoice-summary-stats">
+            <!-- Populated by JS -->
+        </div>
+
+        <div class="totals" id="invoice-totals">
+            <!-- Populated by JS -->
+        </div>
+
+        <div class="words" id="amount-in-words"></div>
+    </div>
+
+    <div class="no-print" style="text-align: center; margin: 30px;">
+        <button onclick="window.print()"
+            style="padding: 12px 24px; background: #333; color: white; border: none; cursor: pointer; font-size: 1rem; border-radius: 4px;">Print
+            Invoice</button>
+    </div>
+
+    <script>
+        const formatCurrency = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
+
+        function numberToWords(number) {
+            const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+            const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+            const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+            if (number === 0) return 'Zero';
+
+            let words = '';
+
+            if (Math.floor(number / 10000000) > 0) {
+                words += numberToWords(Math.floor(number / 10000000)) + ' Crore ';
+                number %= 10000000;
+            }
+            if (Math.floor(number / 100000) > 0) {
+                words += numberToWords(Math.floor(number / 100000)) + ' Lakh ';
+                number %= 100000;
+            }
+            if (Math.floor(number / 1000) > 0) {
+                words += numberToWords(Math.floor(number / 1000)) + ' Thousand ';
+                number %= 1000;
+            }
+            if (Math.floor(number / 100) > 0) {
+                words += numberToWords(Math.floor(number / 100)) + ' Hundred ';
+                number %= 100;
+            }
+            if (number > 0) {
+                if (words !== '') words += 'and ';
+                if (number < 10) words += units[number];
+                else if (number < 20) words += teens[number - 10];
+                else {
+                    words += tens[Math.floor(number / 10)];
+                    if (number % 10 > 0) words += ' ' + units[number % 10];
+                }
+            }
+            return words.trim();
+        }
+
+        async function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            if (!id) return document.body.innerHTML = 'Invalid Order ID';
+
+            try {
+                // Fetch Business Info
+                const bizRes = await fetch('/api/business-profile');
+                const biz = await bizRes.json();
+
+                const header = document.getElementById('invoice-header');
+                header.innerHTML = `
+                    <h1>${biz.name || 'HOME FOOD'}</h1>
+                    <p>${biz.address || ''}</p>
+                    <p>Contact: ${biz.contact_number || ''}</p>
+                `;
+
+                // Fetch Order
+                const res = await fetch(`/api/orders/${id}`);
+                if (!res.ok) throw new Error('Order not found');
+                const data = await res.json();
+
+                // Meta
+                document.getElementById('invoice-meta').innerHTML = `
+                    <div>
+                        <strong>BILL TO:</strong><br>
+                        ${data.user.name}<br>
+                        ${data.user.address}<br>
+                        ${data.user.mobile_number}
+                    </div>
+                    <div style="text-align:right">
+                        <strong>ORDER #${data.order.id}</strong><br>
+                        Order Date : ${new Date(data.order.created_at).toLocaleDateString('en-GB')}<br>
+                        Delivery Status : ${data.order.status}
+                    </div>
+                `;
+
+                // Items Calculation
+                let itemSubTotal = 0;
+                let totalQty = 0;
+
+                const itemsHtml = data.items.map((item, index) => {
+                    itemSubTotal += item.total_price;
+                    totalQty += item.quantity;
+                    return `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.product_name}</td>
+                            <td>${item.quantity}</td>
+                            <td>${formatCurrency(item.unit_price)}</td>
+                            <td style="text-align:right">${formatCurrency(item.total_price)}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                document.getElementById('invoice-items').innerHTML = itemsHtml;
+
+                // Summary Stats
+                document.getElementById('invoice-summary-stats').innerHTML = `
+                    <div>TOTAL ITEMS: ${data.items.length}</div>
+                    <div>TOTAL QTY: ${totalQty}</div>
+                    <div>TOTAL AMOUNT: ${formatCurrency(itemSubTotal)}</div>
+                `;
+
+                // Charges and Totals
+                const cartValue = biz.cart_value || 1000;
+                const delivery = (itemSubTotal >= cartValue) ? (biz.delivery_charge || 0) : 0;
+                const handling = biz.handling_charge || 0;
+                const grandTotal = itemSubTotal + delivery + handling;
+
+                // Payment Details
+                const payment = data.payment || {};
+                const paymentStatus = payment.status || 'Pending';
+                const paymentMethod = payment.method || 'Not Set';
+                const amountPaid = payment.amount_paid || 0;
+
+                // Build payment details based on method
+                let paymentDetailsHtml = '';
+                if (paymentMethod === 'Cash') {
+                    paymentDetailsHtml = `<p>Received Amount (INR) : ${formatCurrency(amountPaid)}</p>`;
+                } else if (paymentMethod === 'UPI') {
+                    paymentDetailsHtml = `
+                        <p>App Name : ${payment.app_name || 'N/A'}</p>
+                        <p>Transaction ID : ${payment.transaction_id || 'N/A'}</p>
+                        <p>Received Amount (INR) : ${formatCurrency(amountPaid)}</p>
+                    `;
+                }
+
+                document.getElementById('invoice-totals').innerHTML = `
+                    <p>Sub Total: ${formatCurrency(itemSubTotal)}</p>
+                    <p>Handling Charge: ${formatCurrency(handling)}</p>
+                    ${delivery > 0 ? `<p>Delivery Charge: ${formatCurrency(delivery)}</p>` : ''}
+                    <div class="grand-total">GRAND TOTAL: ${formatCurrency(grandTotal)}</div>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                        <p><strong>Payment Status :</strong> ${paymentStatus}</p>
+                        <p><strong>Payment Method :</strong> ${paymentMethod}</p>
+                        ${paymentDetailsHtml}
+                    </div>
+                `;
+
+                // Words
+                document.getElementById('amount-in-words').textContent =
+                    'Rupees (In Words) : ' + numberToWords(Math.round(grandTotal)) + ' Rupees Only';
+
+            } catch (e) {
+                console.error(e);
+                document.body.innerHTML = 'Error loading invoice';
+            }
+        }
+
+        init();
+
+    </script>
+</body>
+
+</html>

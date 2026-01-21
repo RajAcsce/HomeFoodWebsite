@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Food Ordering</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+
+    <!-- LOGIN VIEW -->
+    <div id="login-view" class="view container login-container">
+        <div class="card login-card">
+            <h2 class="logo">HomeFood</h2>
+            <div class="login-tabs">
+                <button class="tab-btn active" onclick="switchLogin('user')">User</button>
+                <button class="tab-btn" onclick="switchLogin('admin')">Admin</button>
+            </div>
+
+            <!-- User Login Form -->
+            <form id="user-login-form">
+                <div class="input-group">
+                    <label>Mobile Number <span style="color: red;">*</span></label>
+                    <input type="tel" name="mobile" placeholder="Enter mobile number" required pattern="[0-9]{10}">
+                </div>
+                <button type="submit" class="btn" style="width: 100%">Login / Signup</button>
+            </form>
+
+            <!-- Admin Login Form -->
+            <form id="admin-login-form" style="display: none;">
+                <div class="input-group">
+                    <label>Username</label>
+                    <div class="icon-input-container">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" name="username" placeholder="Enter Username" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <div class="icon-input-container">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" name="password" placeholder="Enter Password" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn" style="width: 100%">Admin Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div id="admin-panel" class="view" style="display: none;">
+        <header>
+            <div class="container navbar">
+                <div class="logo">Admin Panel</div>
+                <div class="nav-links">
+                    <a href="#" id="nav-dashboard">Dashboard</a>
+                    <a href="#" id="nav-revenue">Revenue</a>
+                    <a href="#" id="nav-users">Users</a>
+                    <a href="#" id="nav-products">Products</a>
+                    <a href="#" id="nav-orders">Orders</a>
+                    <a href="#" id="nav-business">Business Profile</a>
+                    <a href="#" onclick="doLogout('admin')">Logout</a>
+                </div>
+            </div>
+        </header>
+
+        <div class="container" style="padding-top: 20px;">
+            <!-- Dashboard View -->
+            <div id="admin-dashboard" class="admin-tab">
+                <h2>Overview</h2>
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <h3><span id="stat-users">0</span></h3>
+                        <p>Total Users</p>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #2ed573, #7bed9f);">
+                        <h3><span id="stat-orders">0</span></h3>
+                        <p>Total Orders</p>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #ffa502, #ffda79);">
+                        <h3><span id="stat-revenue">₹0</span></h3>
+                        <p>Total Revenue</p>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #70a1ff, #1e90ff);">
+                        <h3><span id="stat-products">0</span></h3>
+                        <p>Total Products</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid" style="grid-template-columns: 2fr 1fr;">
+                    <div class="card">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <h4 style="margin:0;">Revenue Overview (Daily)</h4>
+                            <div style="display:flex; gap:10px;">
+                                <input type="month" id="revenue-month-filter" class="form-control" style="padding:5px;">
+                                <div style="display:flex; gap:5px; align-items:center;">
+                                    <input type="date" id="revenue-start-date" style="padding:5px;">
+                                    <span>to</span>
+                                    <input type="date" id="revenue-end-date" style="padding:5px;">
+                                    <button class="btn btn-sm" onclick="Admin.filterRevenueChart()">Go</button>
+                                </div>
+                            </div>
+                        </div>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                    <div class="card">
+                        <h4>Order Status Distribution</h4>
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Today's Orders Summary -->
+                <div class="card">
+                    <h3>Today's Orders Summary</h3>
+                    <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 20px;">
+                        <div class="stat-card" style="background: linear-gradient(135deg, #48dbfb, #0abde3);">
+                            <p>Today's Orders</p>
+                            <h3><span id="today-orders-count">0</span></h3>
+                        </div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #1dd1a1, #10ac84);">
+                            <p>Today's Revenue</p>
+                            <h3><span id="today-revenue">₹0</span></h3>
+                        </div>
+                    </div>
+                    <div id="today-orders-list"></div>
+                </div>
+            </div>
+
+            <!-- Revenue Details View -->
+            <div id="admin-revenues" class="admin-tab" style="display: none;">
+                <h2>Revenue Details</h2>
+                <div class="card"
+                    style="text-align:center; margin-bottom: 20px; background: linear-gradient(135deg, #FFC312, #F79F1F); color: white;">
+                    <h3 style="margin:0;">Total Revenue</h3>
+                    <h1 style="margin:10px 0; font-size: 3rem;" id="rev-total">₹0</h1>
+                </div>
+                <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="stat-card" style="background: linear-gradient(135deg, #2ed573, #7bed9f);">
+                        <h3><span id="rev-cash">₹0</span></h3>
+                        <p>Cash Revenue</p>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #54a0ff, #2e86de);">
+                        <h3><span id="rev-upi">₹0</span></h3>
+                        <p>UPI Revenue</p>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #ff6b6b, #ee5253);">
+                        <h3><span id="rev-pending">₹0</span></h3>
+                        <p>Pending / Remaining</p>
+                    </div>
+                </div>
+                <div class="card" style="max-width: 600px; margin: 20px auto;">
+                    <h4 class="text-center">Revenue Distribution</h4>
+                    <canvas id="revenuePieChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Products View -->
+            <div id="admin-products" class="admin-tab" style="display: none;">
+                <h2>Manage Products</h2>
+                <div class="card">
+                    <h4>Add New Product</h4>
+                    <form id="add-product-form">
+                        <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
+                            <div class="input-group"><input type="text" name="name" placeholder="Product Name" required>
+                            </div>
+                            <div class="input-group"><input type="number" name="price" placeholder="Price" required>
+                            </div>
+                            <div class="input-group"><input type="text" name="unit" placeholder="Unit (e.g. Kg, Plate)"
+                                    required></div>
+                            <div class="input-group"><input type="text" name="quantity"
+                                    placeholder="Qty Description (e.g. 500g)" required></div>
+                            <div class="input-group"><input type="text" name="image_url" placeholder="Image URL"></div>
+                            <div class="input-group">
+                                <select name="food_type">
+                                    <option value="">Select Food Type (Optional)</option>
+                                    <option value="Sweets">Sweets</option>
+                                    <option value="Papad & Fryums">Papad & Fryums</option>
+                                    <option value="Pickles">Pickles</option>
+                                    <option value="Home Food / Daily Items">Home Food / Daily Items</option>
+                                    <option value="Grinding Items">Grinding Items</option>
+                                    <option value="Spice & Masala Powders">Spice & Masala Powders</option>
+                                    <option value="Snacks & Namkeens">Snacks & Namkeens</option>
+                                    <option value="Health & Special Items">Health & Special Items</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <select name="status">
+                                    <option value="Available">Item Available</option>
+                                    <option value="Not Available">Item Not Available</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-group"><textarea name="description" placeholder="Description"></textarea>
+                        </div>
+                        <button type="submit" class="btn">Add Product</button>
+                    </form>
+                </div>
+                <div id="admin-product-list" class="card table-container"></div>
+            </div>
+
+            <!-- Users View -->
+            <div id="admin-users" class="admin-tab" style="display: none;">
+                <h2>Manage Users</h2>
+                <div id="admin-user-list" class="card table-container"></div>
+            </div>
+
+            <!-- Orders View -->
+            <div id="admin-orders" class="admin-tab" style="display: none;">
+                <h2>Manage Orders</h2>
+                <div id="admin-order-list" class="card table-container"></div>
+            </div>
+
+            <!-- Order Detail View -->
+            <div id="admin-order-detail" class="admin-tab" style="display: none;">
+                <button class="btn btn-secondary" onclick="App.showTab('admin-orders', 'admin-tab')">Back</button>
+                <h2>Order #<span id="order-detail-id"></span></h2>
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h4>Items</h4>
+                        <ul id="order-detail-items" style="list-style: inside; margin-top: 10px;"></ul>
+
+                        <!-- Payment Summary -->
+                        <div style="border-top: 2px solid #eee; margin-top: 20px; padding-top: 15px;">
+                            <h4>Payment Summary</h4>
+                            <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                                <span><strong>Grand Total:</strong></span>
+                                <span id="payment-grand-total">₹0</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                                <span><strong>Amount Paid:</strong></span>
+                                <span id="payment-amount-paid">₹0</span>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; margin: 8px 0; font-size: 1.1rem;">
+                                <span><strong>Remaining Balance:</strong></span>
+                                <span id="payment-remaining" style="font-weight: 700; color: #e74c3c;">₹0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h4>Payment Management</h4>
+                        <form id="payment-form" onsubmit="Admin.submitPayment(event)">
+                            <div class="input-group">
+                                <label>Payment Status</label>
+                                <select name="status">
+                                    <option value="Pending">Pending</option>
+                                    <option value="Paid">Paid</option>
+                                    <option value="Failed">Failed</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Payment Method</label>
+                                <select name="method" id="payment-method-select" onchange="Admin.togglePaymentFields()">
+                                    <option value="Cash">Cash</option>
+                                    <option value="UPI">UPI</option>
+                                </select>
+                            </div>
+
+                            <!-- Cash Fields -->
+                            <div id="cash-fields" style="display: none;">
+                                <div class="input-group">
+                                    <label>Received Amount (INR) <span style="color: red;">*</span></label>
+                                    <input type="number" name="amount_paid" id="cash-amount" step="0.01" min="0">
+                                </div>
+                            </div>
+
+                            <!-- UPI Fields -->
+                            <div id="upi-fields" style="display: none;">
+                                <div class="input-group">
+                                    <label>Transaction ID <span style="color: red;">*</span></label>
+                                    <input type="text" name="transaction_id" id="upi-transaction-id">
+                                </div>
+                                <div class="input-group">
+                                    <label>App Name <span style="color: red;">*</span></label>
+                                    <input type="text" name="app_name" id="upi-app-name"
+                                        placeholder="e.g. PhonePe, GPay, Paytm">
+                                </div>
+                                <div class="input-group">
+                                    <label>Received Amount (INR) <span style="color: red;">*</span></label>
+                                    <input type="number" name="amount_paid" id="upi-amount" step="0.01" min="0">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn">Update Payment</button>
+                        </form>
+                        <br>
+                        <button id="btn-print-invoice" class="btn btn-secondary"
+                            onclick="Admin.printInvoice(this.dataset.orderId)">Print Invoice</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Profile View -->
+        <div id="admin-business" class="admin-tab" style="display: none;">
+            <div class="card" style="max-width: 800px; margin: 0 auto;">
+                <h2>Business Profile</h2>
+                <form id="business-profile-form" enctype="multipart/form-data">
+                    <div class="input-group">
+                        <label>Business Name</label>
+                        <input type="text" name="name" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Address</label>
+                        <textarea name="address" required style="height: 100px"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>Contact Number</label>
+                        <input type="text" name="contact_number" required>
+                    </div>
+                    <div class="dashboard-grid" style="grid-template-columns:  1fr 1fr 1fr; margin-bottom: 0;">
+                        <div class="input-group">
+                            <label>Delivery Charge (₹)</label>
+                            <input type="number" name="delivery_charge" step="0.01" value="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Handling Charge (₹)</label>
+                            <input type="number" name="handling_charge" step="0.01" value="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Cart Value (₹)</label>
+                            <input type="number" name="cart_value" step="0.01" value="1000"
+                                placeholder="Minimum cart value for delivery charge">
+                        </div>
+                    </div>
+                    <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
+                        <div class="input-group">
+                            <label>Shop Open Time</label>
+                            <input type="time" name="open_time">
+                        </div>
+                        <div class="input-group">
+                            <label>Shop Close Time</label>
+                            <input type="time" name="close_time">
+                        </div>
+                    </div>
+                    <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
+                        <div class="input-group">
+                            <label>Break Start Time</label>
+                            <input type="time" name="break_start">
+                        </div>
+                        <div class="input-group">
+                            <label>Break End Time</label>
+                            <input type="time" name="break_end">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Weekly Holiday</label>
+                        <select name="weekly_holiday">
+                            <option value="">No Holiday</option>
+                            <option value="Sunday">Sunday</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Shop Image URL</label>
+                        <input type="text" name="shop_image_url" placeholder="https://example.com/image.jpg">
+                        <div id="preview-shop-image" style="margin-top:5px"></div>
+                    </div>
+                    <div class="input-group">
+                        <label>Shop Act Licence URL</label>
+                        <input type="text" name="licence_doc_url" placeholder="https://example.com/doc.pdf">
+                        <div id="preview-licence-doc" style="margin-top:5px"></div>
+                    </div>
+                    <button type="submit" class="btn w-100">Save Profile</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- USER PANEL -->
+    <div id="user-panel" class="view" style="display: none;">
+        <header>
+            <div class="container navbar">
+                <div class="logo">HomeFood</div>
+                <div class="nav-links">
+                    <a href="#" onclick="App.showTab('user-browse', 'user-tab')">Menu</a>
+                    <a href="#" onclick="App.showTab('user-shop', 'user-tab'); User.loadShopDetails()">Shop Details</a>
+                    <a href="#" onclick="App.showTab('user-orders', 'user-tab'); User.loadOrders()">My Orders</a>
+                    <a href="#" onclick="App.showTab('user-profile', 'user-tab')">Profile</a>
+                    <a href="#" onclick="toggleCart()">Cart (<span id="cart-count">0</span>)</a>
+                    <a href="#" onclick="doLogout('user')">Logout</a>
+                </div>
+            </div>
+        </header>
+
+        <div class="container" style="padding-top: 20px;">
+            <div id="user-browse" class="user-tab">
+                <div class="hero">
+                    <h2>Delicious Food, Delivered.</h2>
+                    <p>Order fresh, home-style meals directly to your doorstep with our premium delivery service.</p>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin-bottom: 0;">Our Menu</h2>
+                    <div style="min-width: 250px;">
+                        <select id="food-type-filter" onchange="User.filterByFoodType(this.value)"
+                            style="width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 12px; font-size: 1rem; background: white;">
+                            <option value="">All Food Types</option>
+                            <option value="Sweets">Sweets</option>
+                            <option value="Papad & Fryums">Papad & Fryums</option>
+                            <option value="Pickles">Pickles</option>
+                            <option value="Home Food / Daily Items">Home Food / Daily Items</option>
+                            <option value="Grinding Items">Grinding Items</option>
+                            <option value="Spice & Masala Powders">Spice & Masala Powders</option>
+                            <option value="Snacks & Namkeens">Snacks & Namkeens</option>
+                            <option value="Health & Special Items">Health & Special Items</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="user-product-list" class="product-grid"></div>
+            </div>
+
+            <div id="user-shop" class="user-tab" style="display: none;">
+                <h2>Shop Details</h2>
+                <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; align-items: start;">
+                    <div class="card">
+                        <div id="shop-details-content">Loading...</div>
+                    </div>
+                    <div class="card" id="shop-licence-preview" style="display:none; text-align:center;">
+                        <h4>Shop Licence</h4>
+                        <div id="licence-viewer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="user-orders" class="user-tab" style="display: none;">
+                <h2>My Orders</h2>
+                <div id="user-order-list"></div>
+            </div>
+
+            <div id="user-profile" class="user-tab" style="display: none;">
+                <h2 class="text-center">My Profile</h2>
+                <div class="card form-center">
+                    <form id="profile-form">
+                        <div class="input-group"><label>Name *</label><input type="text" name="name" required></div>
+                        <div class="input-group"><label>Address *</label><textarea name="address" required></textarea>
+                        </div>
+                        <div class="input-group"><label>Alternate Mobile *</label><input type="tel" name="alt_mobile"
+                                required>
+                        </div>
+                        <button type="submit" class="btn">Save Profile</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart Drawer -->
+        <div id="cart-drawer" class="cart-drawer">
+            <h3>Your Cart</h3>
+            <div id="cart-items" class="cart-items"></div>
+            <div class="cart-footer">
+                <div id="date-picker-container" style="margin-bottom: 15px;"></div>
+                <div id="delivery-slot-container" style="margin-bottom: 15px;"></div>
+                <h4>Total: <span id="cart-total">₹0</span></h4>
+                <div id="cart-actions">
+                    <button class="btn" style="width: 100%" onclick="User.placeOrder()">Place Order</button>
+                </div>
+                <button class="btn btn-secondary" style="width: 100%; margin-top: 10px;"
+                    onclick="toggleCart()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="edit-user-modal" class="modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+        <div class="card" style="width:90%; max-width:500px; position:relative;">
+            <button onclick="document.getElementById('edit-user-modal').style.display='none'"
+                style="position:absolute; right:15px; top:15px; background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            <h3>Edit User</h3>
+            <form id="edit-user-form">
+                <input type="hidden" name="mobile_number">
+                <div class="input-group">
+                    <label>Name</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="input-group">
+                    <label>Mobile Number</label>
+                    <input type="text" name="display_mobile" disabled style="background:#eee; cursor:not-allowed;">
+                </div>
+                <div class="input-group">
+                    <label>Alternate Mobile</label>
+                    <input type="text" name="alt_mobile">
+                </div>
+                <div class="input-group">
+                    <label>Address</label>
+                    <textarea name="address"></textarea>
+                </div>
+                <button type="submit" class="btn w-100">Update User</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/app.js?v=2"></script>
+    <script src="js/admin.js?v=2"></script>
+    <script>
+        // Inline glue code to separate concerns later if needed
+
+        // Login Logic
+        function switchLogin(type) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            if (type === 'admin') {
+                document.getElementById('admin-login-form').style.display = 'block';
+                document.getElementById('user-login-form').style.display = 'none';
+            } else {
+                document.getElementById('admin-login-form').style.display = 'none';
+                document.getElementById('user-login-form').style.display = 'block';
+            }
+        }
+
+        document.getElementById('admin-login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target));
+            try {
+                await App.request('/admin/login', 'POST', data);
+                // Check session or just assume success
+                App.state.isAdmin = true;
+                App.showView('admin-panel');
+                if (typeof Admin !== 'undefined' && Admin.init) {
+                    Admin.init();
+                } else {
+                    console.error('Admin module not loaded');
+                    App.showToast('Error loading Admin module', 'error');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        document.getElementById('user-login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target));
+            try {
+                const res = await App.request('/user/login', 'POST', data);
+                App.state.user = res.user;
+                App.showView('user-panel');
+                await User.init();
+
+                // Show welcome message
+                const userName = res.user.name;
+                if (userName) {
+                    App.showToast(`Welcome back ${userName}`);
+                } else {
+                    App.showToast('Welcome back, Guest! Complete your profile to get started!');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        async function doLogout(type) {
+            try {
+                await App.request(`/${type}/logout`, 'POST');
+                location.reload();
+            } catch (err) { console.error(err); }
+        }
+
+        function toggleCart() {
+            document.getElementById('cart-drawer').classList.toggle('open');
+            User.renderCart();
+        }
+
+        // --- USER LOGIC (Inline for minimal file count or move to user.js) ---
+        const User = (() => {
+            let cart = [];
+
+            async function init() {
+                await loadProfile();
+                await loadMenu();
+                await loadBusinessRates();
+                await loadBusinessRates();
+                // Check if we were editing? No, simple reload clears state.
+                renderCart();
+            }
+
+            let editingOrderId = null; // Track if we are editing an order
+
+            async function loadProfile() {
+                try {
+                    const user = await App.request('/user/profile');
+                    const f = document.getElementById('profile-form');
+                    f.name.value = user.name || '';
+                    f.address.value = user.address || '';
+                    f.alt_mobile.value = user.alt_mobile_number || '';
+
+                    f.onsubmit = async (e) => {
+                        e.preventDefault();
+                        const data = Object.fromEntries(new FormData(f));
+                        await App.request('/user/profile', 'PUT', data);
+                        App.showToast('Profile saved');
+                    };
+                } catch (e) { }
+            }
+
+            let allProducts = []; // Store all products for filtering
+
+            async function loadMenu() {
+                const list = document.getElementById('user-product-list');
+                try {
+                    const products = await App.request('/products');
+                    allProducts = products; // Store for filtering
+                    renderProducts(products);
+                } catch (e) {
+                    document.getElementById('user-product-list').innerHTML = 'Error loading menu';
+                }
+            }
+
+            function renderProducts(products) {
+                const list = document.getElementById('user-product-list');
+                if (!products || products.length === 0) {
+                    list.innerHTML = `
+                        <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+                            <h3 style="color: var(--text-light); margin-bottom: 10px;">Item Not Found!</h3>
+                            <p style="color: #666;">Just Pick The Right Filter.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                list.innerHTML = products.map(p => `
+                    <div class="card product-card">
+                        <img src="${p.image_url || 'https://via.placeholder.com/200?text=Food'}" class="product-img" alt="${p.name}">
+                        <div class="product-info">
+                            <h4>${p.name}</h4>
+                            <p class="product-price">${App.formatCurrency(p.price)} / ${p.unit}</p>
+                            <p style="color: #666; font-size: 0.9rem">${p.description || ''}</p>
+                            ${p.status === 'Available' ?
+                        `<button class="btn btn-sm" style="width:100%; margin-top:10px" onclick="User.addToCart(${p.id}, '${p.name}', ${p.price})">Add to Cart</button>`
+                        : '<button class="btn btn-sm btn-secondary" disabled style="width:100%; margin-top:10px">Unavailable</button>'}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            function filterByFoodType(foodType) {
+                if (!foodType) {
+                    renderProducts(allProducts);
+                } else {
+                    const filtered = allProducts.filter(p => p.food_type === foodType);
+                    renderProducts(filtered);
+                }
+            }
+
+            function addToCart(id, name, price) {
+                const existing = cart.find(i => i.id === id);
+                if (existing) existing.quantity++;
+                else cart.push({ id, name, price, quantity: 1 });
+                updateCartUI();
+                App.showToast('Added to cart');
+            }
+
+            function updateCartUI() {
+                document.getElementById('cart-count').textContent = cart.reduce((a, b) => a + b.quantity, 0);
+            }
+
+            let businessRates = { delivery: 0, handling: 0, cartValue: 1000 };
+            let businessInfo = null;
+
+            async function loadBusinessRates() {
+                try {
+                    const data = await App.request('/business-profile');
+                    if (data) {
+                        businessRates.delivery = data.delivery_charge || 0;
+                        businessRates.handling = data.handling_charge || 0;
+                        businessRates.cartValue = data.cart_value || 1000;
+                        businessInfo = data;
+                    }
+                } catch (e) { }
+            }
+
+            function renderCart() {
+                const container = document.getElementById('cart-items');
+                if (cart.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align:center; padding:20px;">
+                            <p>Cart is empty</p>
+                            <button class="btn" style="margin-top:10px" onclick="toggleCart(); App.showTab('user-browse', 'user-tab')">Order Now</button>
+                        </div>
+                    `;
+                    document.getElementById('cart-total').textContent = App.formatCurrency(0);
+                    return;
+                }
+
+                let subTotal = 0;
+                container.innerHTML = cart.map((item, idx) => {
+                    subTotal += item.price * item.quantity;
+                    return `
+                        <div class="cart-item">
+                            <div>
+                                <strong>${item.name}</strong><br>
+                                ${App.formatCurrency(item.price)} x ${item.quantity}
+                            </div>
+                            <div>
+                                <button class="btn-qty" onclick="User.updateQty(${idx}, -1)">-</button>
+                                <span style="margin: 0 10px">${item.quantity}</span>
+                                <button class="btn-qty" onclick="User.updateQty(${idx}, 1)">+</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Calculate Charges
+                // Delivery Charge condition: If Subtotal >= cartValue, both charges apply
+                // If < cartValue, only Handling charge applies
+
+                let delivery = (subTotal >= businessRates.cartValue) ? businessRates.delivery : 0;
+                let handling = businessRates.handling;
+
+                let grandTotal = subTotal + delivery + handling;
+
+                // Add summary to container
+                const summaryDiv = document.createElement('div');
+                summaryDiv.style.marginTop = '20px';
+                summaryDiv.style.borderTop = '1px solid #eee';
+                summaryDiv.style.paddingTop = '10px';
+                summaryDiv.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px">
+                        <span>Item Total:</span><span>${App.formatCurrency(subTotal)}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px">
+                        <span>Handling Charge:</span><span>${App.formatCurrency(handling)}</span>
+                    </div>
+                    ${delivery > 0 ? `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px">
+                        <span>Delivery Charge:</span><span>${App.formatCurrency(delivery)}</span>
+                    </div>` : ''}
+                    <div style="display:flex; justify-content:space-between; font-weight:800; font-size:1.1rem; margin-top:10px">
+                        <span>Grand Total:</span><span>${App.formatCurrency(grandTotal)}</span>
+                    </div>
+                `;
+                container.appendChild(summaryDiv);
+
+                document.getElementById('cart-total').textContent = App.formatCurrency(grandTotal);
+
+                // Update Cart Actions (Place vs Update)
+                const actionsContainer = document.getElementById('cart-actions');
+                if (actionsContainer) {
+                    if (editingOrderId) {
+                        actionsContainer.innerHTML = `
+                            <button class="btn" style="width: 100%; background: #e67e22;" onclick="User.placeOrder()">Update Order #${editingOrderId}</button>
+                            <button class="btn btn-secondary" style="width: 100%; margin-top: 5px;" onclick="User.cancelEdit()">Cancel Edit</button>
+                        `;
+                    } else {
+                        actionsContainer.innerHTML = `
+                            <button class="btn" style="width: 100%" onclick="User.placeOrder()">Place Order</button>
+                        `;
+                    }
+                }
+
+                // Render date picker and delivery slot selector
+                renderDatePicker();
+                renderDeliverySlots();
+            }
+
+            let selectedSlot = null;
+            let selectedDate = null; // For future date orders
+
+            // Render date picker in cart
+            function renderDatePicker() {
+                const container = document.getElementById('date-picker-container');
+                if (cart.length === 0) {
+                    container.innerHTML = '';
+                    return;
+                }
+
+                const today = new Date().toISOString().split('T')[0];
+                const currentDate = selectedDate || today;
+
+                container.innerHTML = `
+                    <div style="background: #f8f9fa; padding: 12px; border-radius: 12px; margin-bottom: 10px;">
+                        <label style="font-weight:600; margin-bottom:8px; display:block">Select Delivery Date:</label>
+                        <input type="date" id="delivery-date-input" value="${currentDate}" min="${today}" 
+                            style="width:100%; padding:10px; border:2px solid #eee; border-radius:8px; font-size:1rem;"
+                            onchange="User.onDateChange(this.value)">
+                    </div>
+                `;
+            }
+
+            function onDateChange(date) {
+                selectedDate = date;
+                selectedSlot = null; // Reset slot when date changes
+                showSlots = false;
+                renderDeliverySlots();
+            }
+
+            function generateTimeSlots() {
+                if (!businessInfo) return [];
+
+                const now = new Date();
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+                // Check if selected date or today
+                const deliveryDate = selectedDate ? new Date(selectedDate + 'T00:00:00') : now;
+                const isToday = deliveryDate.toDateString() === now.toDateString();
+                const deliveryDay = days[deliveryDate.getDay()];
+
+                // Check if selected day is a holiday
+                if (businessInfo.weekly_holiday && businessInfo.weekly_holiday === deliveryDay) {
+                    return { error: `Sorry, we are closed on ${deliveryDay}` };
+                }
+
+                // Check if we have shop hours
+                if (!businessInfo.open_time || !businessInfo.close_time) {
+                    return []; // No restrictions if not set
+                }
+
+                const slots = [];
+
+                // Express Slot (only for today)
+                if (isToday) {
+                    slots.push({
+                        label: 'Express Delivery (60 mins)',
+                        value: 'express',
+                        display: 'Express Delivery (60 mins)'
+                    });
+                }
+
+                // Generate hourly slots
+                const currentHour = now.getHours();
+                const [openHour, openMinute] = businessInfo.open_time.split(':').map(Number);
+                const [closeHour, closeMinute] = businessInfo.close_time.split(':').map(Number);
+
+                let breakStart = null, breakEnd = null;
+                if (businessInfo.break_start && businessInfo.break_end) {
+                    breakStart = businessInfo.break_start.split(':').map(Number);
+                    breakEnd = businessInfo.break_end.split(':').map(Number);
+                }
+
+                // Start from current hour for today, opening hour for future dates
+                let slotHour = isToday ? currentHour : openHour;
+
+                while (slotHour < closeHour) {
+                    const slotStart = slotHour;
+                    const slotEnd = slotHour + 1;
+
+                    // Skip if slot is during break time
+                    if (breakStart && breakEnd) {
+                        const isInBreak = (slotStart >= breakStart[0] && slotStart < breakEnd[0]) ||
+                            (slotEnd > breakStart[0] && slotEnd <= breakEnd[0]);
+                        if (isInBreak) {
+                            slotHour++;
+                            continue;
+                        }
+                    }
+
+                    // Skip if slot is before opening (only relevant for today)
+                    if (isToday && slotEnd <= openHour) {
+                        slotHour++;
+                        continue;
+                    }
+
+                    // Format time
+                    const formatTime = (hour) => {
+                        const period = hour >= 12 ? 'PM' : 'AM';
+                        const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+                        return `${displayHour}:00 ${period}`;
+                    };
+
+                    const label = `${formatTime(slotStart)} - ${formatTime(slotEnd)}`;
+                    slots.push({
+                        label: label,
+                        value: label,
+                        display: label
+                    });
+
+                    slotHour++;
+                }
+
+                return slots;
+            }
+
+            let showSlots = false;
+
+            function renderDeliverySlots() {
+                const container = document.getElementById('delivery-slot-container');
+                if (cart.length === 0) {
+                    container.innerHTML = '';
+                    showSlots = false;
+                    return;
+                }
+
+                const slots = generateTimeSlots();
+
+                if (slots.error) {
+                    container.innerHTML = `<p style="color:red; text-align:center">${slots.error}</p>`;
+                    return;
+                }
+
+                if (slots.length === 0) {
+                    container.innerHTML = '<p style="text-align:center">No delivery slots available</p>';
+                    return;
+                }
+
+                // If slot is selected, show selected slot with option to change
+                if (selectedSlot && !showSlots) {
+                    const selectedSlotObj = slots.find(s => s.value === selectedSlot);
+                    const displayText = selectedSlotObj ? selectedSlotObj.display : selectedSlot;
+                    container.innerHTML = `
+                        <div style="background: #d4edda; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong>Delivery Time:</strong><br>
+                                    <span style="font-size: 0.95rem;">${displayText}</span>
+                                </div>
+                                <button class="btn btn-sm btn-secondary" onclick="User.toggleSlotView()">Change</button>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // If slots not shown yet, show toggle button
+                if (!showSlots) {
+                    container.innerHTML = `
+                        <button class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;" onclick="User.toggleSlotView()">
+                            <i class="fas fa-clock"></i> Select a Delivery Time Slot
+                        </button>
+                    `;
+                    return;
+                }
+
+                // Show the slots
+                let html = '<div style="text-align:left"><label style="font-weight:600; margin-bottom:8px; display:block">Select Delivery Time:</label>';
+                slots.forEach((slot, idx) => {
+                    const isChecked = selectedSlot === slot.value ? 'checked' : '';
+                    html += `
+                        <div style="margin-bottom: 5px;">
+                            <input type="radio" id="slot-${idx}" name="delivery_slot" value="${slot.value}" ${isChecked} onchange="User.selectSlot('${slot.value}')">
+                            <label for="slot-${idx}" style="margin-left:8px; cursor:pointer">${slot.display}</label>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            }
+
+            function toggleSlotView() {
+                showSlots = !showSlots;
+                renderDeliverySlots();
+            }
+
+            function selectSlot(value) {
+                selectedSlot = value;
+                showSlots = false; // Hide slots after selection
+                renderDeliverySlots(); // Re-render to show selected slot
+            }
+
+            function updateQty(idx, delta) {
+                cart[idx].quantity += delta;
+                if (cart[idx].quantity <= 0) cart.splice(idx, 1);
+                updateCartUI();
+                renderCart();
+            }
+
+            async function placeOrder() {
+                if (cart.length === 0) return App.showToast('Cart is empty', 'error');
+
+                // Check if slot is selected
+                if (!selectedSlot) {
+                    App.showToast('Please select a delivery time slot', 'error');
+                    // Highlight the delivery slot button
+                    const slotBtn = document.querySelector('#delivery-slot-container button');
+                    if (slotBtn) {
+                        slotBtn.classList.add('delivery-slot-highlight');
+                        setTimeout(() => slotBtn.classList.remove('delivery-slot-highlight'), 3000);
+                    }
+                    return;
+                }
+
+                // Check if profile is complete (name and address)
+                const user = await App.request('/user/profile');
+                if (!user.name || !user.address) {
+                    App.showToast('Please complete your profile first', 'error');
+                    App.showTab('user-profile', 'user-tab');
+                    toggleCart();
+                    return;
+                }
+
+                let subTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                let delivery = (subTotal >= businessRates.cartValue) ? businessRates.delivery : 0;
+                let handling = businessRates.handling;
+                let total = subTotal + delivery + handling;
+
+                try {
+                    if (editingOrderId) {
+                        // UPDATE EXISTING ORDER
+                        await App.request(`/orders/${editingOrderId}`, 'PUT', {
+                            items: cart,
+                            total_amount: total,
+                            delivery_slot: selectedSlot,
+                            delivery_date: selectedDate || new Date().toISOString().split('T')[0]
+                        });
+                        App.showToast('Order Updated Successfully!');
+                    } else {
+                        // CREATE NEW ORDER
+                        const res = await App.request('/orders', 'POST', {
+                            items: cart,
+                            total_amount: total,
+                            delivery_slot: selectedSlot,
+                            delivery_date: selectedDate || new Date().toISOString().split('T')[0]
+                        });
+                        App.showToast('Order Placed Successfully! ID: ' + res.orderId);
+                    }
+
+                    // Reset
+                    cart = [];
+                    selectedSlot = null;
+                    selectedDate = null;
+                    editingOrderId = null; // Clear edit mode
+                    updateCartUI();
+                    toggleCart();
+                    App.showTab('user-orders', 'user-tab');
+                    loadOrders();
+                } catch (e) {
+                    console.error(e);
+                    App.showToast(editingOrderId ? 'Failed to update order' : 'Failed to place order', 'error');
+                }
+            }
+
+            async function editOrder(orderId) {
+                try {
+                    const res = await App.request(`/orders/${orderId}`);
+                    // res contains { order, items, payment, user }
+                    // Check status before proceeding (double check client side)
+                    const allowed = ['Pending', 'Accepted', 'Preparing'];
+                    if (!allowed.includes(res.order.status)) {
+                        return App.showToast('Cannot edit this order anymore', 'error');
+                    }
+
+                    // Populate Cart
+                    cart = res.items.map(i => ({
+                        id: i.product_id,
+                        name: i.product_name,
+                        price: i.unit_price,
+                        quantity: i.quantity
+                    }));
+
+                    // Set Date and Slot
+                    if (res.order.delivery_date) {
+                        selectedDate = res.order.delivery_date;
+                    }
+                    if (res.order.delivery_slot) {
+                        // If it came from DB express might be lowercase or diff format, handle it logic if needed
+                        // Assuming string match for now
+                        selectedSlot = res.order.delivery_slot;
+                    }
+
+                    editingOrderId = orderId;
+
+                    updateCartUI();
+                    toggleCart(); // Open cart to show user
+                    App.showTab('user-browse', 'user-tab'); // Go to menu to add more items
+                    App.showToast(`Editing Order #${orderId}. Add/Remove items.`);
+
+                } catch (e) {
+                    console.error(e);
+                    App.showToast('Failed to load order for editing', 'error');
+                }
+            }
+
+            function cancelEdit() {
+                editingOrderId = null;
+                cart = [];
+                selectedSlot = null;
+                selectedDate = null;
+                updateCartUI();
+                renderCart(); // Refresh UI
+                App.showToast('Edit cancelled');
+            }
+
+
+            async function loadOrders() {
+                const list = document.getElementById('user-order-list');
+                try {
+                    const orders = await App.request('/my-orders');
+
+                    // Check if orders is empty
+                    if (!orders || orders.length === 0) {
+                        list.innerHTML = `
+                            <div class="card" style="text-align:center; padding:60px 20px;">
+                                <h3 style="color:var(--text-light); margin-bottom:20px">Order History Not Found!</h3>
+                                <button class="btn" onclick="App.showTab('user-browse', 'user-tab')">Order Now</button>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    list.innerHTML = orders.map(o => {
+                        // Parse delivery date (user-selected date)
+                        let dateStr = 'Not Set';
+                        if (o.delivery_date) {
+                            const deliveryDate = new Date(o.delivery_date);
+                            dateStr = deliveryDate.toLocaleDateString('en-GB'); // DD/MM/YYYY
+                        }
+
+                        // Parse delivery time from delivery_slot
+                        let deliveryTime = o.delivery_slot || 'Not Set';
+                        if (deliveryTime === 'express') {
+                            deliveryTime = 'Express Delivery (60 mins)';
+                        }
+
+                        // Build items table rows
+                        let itemsRows = '';
+                        if (o.items && o.items.length > 0) {
+                            itemsRows = o.items.map(i => `
+                                <tr>
+                                    <td style="padding:6px 8px; border-bottom:1px solid #eee;">${i.product_name}</td>
+                                    <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">${i.quantity}</td>
+                                    <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">${i.unit || 'per Unit'}</td>
+                                    <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:right;">${App.formatCurrency(i.total_price)}</td>
+                                </tr>
+                            `).join('');
+                        }
+
+
+
+                        // Edit Button Logic
+                        let actionButtons = '';
+                        const editableStatuses = ['Pending', 'Accepted', 'Preparing'];
+                        if (editableStatuses.includes(o.status)) {
+                            actionButtons += `<button class="btn btn-sm" style="background:#3498db; margin-right:10px;" onclick="User.editOrder(${o.id})">Edit Order</button>`;
+                        }
+
+                        return `
+                            <div class="card" style="padding:20px;">
+                            <h3 style="margin-bottom:15px; font-size:1.2rem; display:flex; justify-content:space-between;">
+                                <span>Order #${o.id}</span>
+                                <div>${actionButtons}</div>
+                            </h3>
+                            
+                            <div style="display:flex; gap:0;">
+                                <!-- Left Column: Order Items -->
+                                <div style="flex:1; padding-right:20px;">
+                                    <p style="font-weight:600; margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">Order Items:</p>
+                                    <div style="max-height:200px; overflow-y:auto;">
+                                        <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                                            <thead style="position:sticky; top:0; background:white;">
+                                                <tr style="border-bottom:2px solid #333;">
+                                                    <th style="padding:6px 8px; text-align:left; font-weight:600;">ITEM NAME</th>
+                                                    <th style="padding:6px 8px; text-align:center; font-weight:600;">ITEM COUNT</th>
+                                                    <th style="padding:6px 8px; text-align:center; font-weight:600;">UNIT</th>
+                                                    <th style="padding:6px 8px; text-align:right; font-weight:600;">AMOUNT</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${itemsRows || '<tr><td colspan="4" style="padding:10px; text-align:center;">No items</td></tr>'}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    ${(o.status === 'Delivered' && o.payment_status === 'Paid') ?
+                                `<button class="btn" style="margin-top:20px; background:#ff6b6b; border:none; padding:10px 25px; border-radius:20px; color:white; cursor:pointer;" onclick="window.open('/invoice.html?id=${o.id}', '_blank')">Print Invoice</button>`
+                                : ''}
+                                </div>
+                                
+                                <!-- Vertical Divider -->
+                                <div style="width:2px; background:#333; margin:0 20px;"></div>
+                                
+                                <!-- Right Column: Order Summary -->
+                                <div style="flex:1; padding-left:20px;">
+                                    <p style="font-weight:700; margin-bottom:15px; font-size:1rem;">Order Summery:</p>
+                                    <p style="margin-bottom:8px;"><strong>Delivery Status :</strong> ${o.status}</p>
+                                    <p style="margin-bottom:8px;"><strong>Delivery Date :</strong> ${dateStr}</p>
+                                    <p style="margin-bottom:8px;"><strong>Delivery Time :</strong> ${deliveryTime}</p>
+                                    <div style="height:15px;"></div>
+                                    <p style="margin-bottom:8px;"><strong>Total :</strong> ${App.formatCurrency(o.total_amount)}</p>
+                                    <p style="margin-bottom:8px;"><strong>Payment :</strong> ${o.payment_status || 'Pending'}</p>
+                                </div>
+                            </div>
+                        </div >
+            `
+                    }).join('');
+                } catch (e) {
+                    list.innerHTML = '<p>Error loading orders</p>';
+                }
+            }
+
+            async function loadShopDetails() {
+                const container = document.getElementById('shop-details-content');
+                try {
+                    const data = await App.request('/business-profile');
+                    if (!data || !data.name) {
+                        container.innerHTML = '<p>Shop details not available.</p>';
+                        return;
+                    }
+
+                    // Format shop timings
+                    const shopTiming = (data.open_time && data.close_time)
+                        ? `From ${formatTime12Hour(data.open_time)} To ${formatTime12Hour(data.close_time)} `
+                        : 'Not Set';
+
+                    const weeklyOff = data.weekly_holiday || 'No Holiday';
+
+                    // Format lunch timing from break_start and break_end
+                    const lunchTiming = (data.break_start && data.break_end)
+                        ? `${formatTime12Hour(data.break_start)} To ${formatTime12Hour(data.break_end)} `
+                        : 'Not Set';
+
+                    container.innerHTML = `
+                        ${data.shop_image_url ? `<img src="${data.shop_image_url}" style="width:100%; max-height:250px; object-fit:cover; border-radius:12px; margin-bottom:20px;">` : ''}
+                        <p style="margin-bottom:10px"><strong>Shop Name :</strong> ${data.name},</p>
+                        <p style="margin-bottom:10px"><strong>Shop Address :</strong> ${data.address},</p>
+                        <p style="margin-bottom:10px"><strong>Contact Number :</strong> ${data.contact_number},</p>
+                        <p style="margin-bottom:10px"><strong>Shop Open Timing :</strong> ${shopTiming},</p>
+                        <p style="margin-bottom:10px"><strong>Shop Lunch Timing :</strong> ${lunchTiming}</p>
+                        <p style="margin-bottom:10px"><strong>Weekly Off :</strong> ${weeklyOff}</p>
+                        ${data.licence_doc_url ? `<div style="margin-top:20px"><button class="btn btn-secondary" onclick="User.previewLicence('${data.licence_doc_url}')">View Shop Licence</button></div>` : ''}
+        `;
+                } catch (e) {
+                    container.innerHTML = '<p>Error loading details.</p>';
+                    console.error(e);
+                }
+            }
+
+            // Helper function to format time in 12-hour format
+            function formatTime12Hour(time24) {
+                if (!time24) return '';
+                const [hours, minutes] = time24.split(':');
+                const hour = parseInt(hours);
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                const hour12 = hour % 12 || 12;
+                return `${hour12}:${minutes} ${ampm} `;
+            }
+
+            function previewLicence(url) {
+                const viewer = document.getElementById('licence-viewer');
+                const container = document.getElementById('shop-licence-preview');
+                const content = document.getElementById('shop-details-content');
+
+                if (!container || !viewer) return;
+
+                container.style.display = 'block';
+                if (url.toLowerCase().endsWith('.pdf')) {
+                    viewer.innerHTML = `<embed src="${url}" type="application/pdf" width="100%" height="500px" />`;
+                } else {
+                    viewer.innerHTML = `<img src="${url}" style="width:100%; height:auto; max-height:500px; object-fit:contain;">`;
+                }
+            }
+
+            // Expose
+            return {
+                init,
+                addToCart,
+                updateQty,
+                placeOrder,
+                renderCart,
+                loadOrders,
+                loadShopDetails,
+                selectSlot,
+                toggleSlotView,
+                onDateChange,
+                filterByFoodType,
+                onDateChange,
+                filterByFoodType,
+                previewLicence,
+                editOrder,
+                cancelEdit,
+                get editingOrderId() { return editingOrderId; }
+            };
+        })();
+
+        // Check session on load (optional implementation for persistence across reload)
+        // For now, simple re-login required on reload for MVP simplicity unless I add a /me endpoint which I did not yet.
+        // Actually, if cookie is effective, we just need to know WHO we are.
+        // Added /api/check-session or similar would be good, but not in original plan.
+        // User will login again.
+    </script>
+</body>
+
+</html>
