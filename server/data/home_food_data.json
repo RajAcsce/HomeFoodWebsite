@@ -7,10 +7,99 @@
       "created_at": "2026-01-19T10:45:56.504Z"
     }
   ],
-  "users": [],
-  "products": [],
-  "orders": [],
-  "order_items": [],
-  "payments": [],
-  "business_info": []
+  "users": [
+    {
+      "mobile_number": "8668363143",
+      "created_at": "2026-01-21T15:03:16.457Z",
+      "name": "test",
+      "alt_mobile_number": "8877667766",
+      "address": "solapur"
+    }
+  ],
+  "products": [
+    {
+      "name": "Test Cake",
+      "image_url": "https://www.shutterstock.com/shutterstock/photos/2616578275/display_1500/stock-vector-knife-fork-and-plate-silhouette-icon-vector-illustration-2616578275.jpg",
+      "unit": "Per Box",
+      "quantity": "10",
+      "description": "Test Cake",
+      "price": 200,
+      "status": "Available",
+      "food_type": "Sweets",
+      "id": 1,
+      "created_at": "2026-01-21T15:04:40.221Z"
+    }
+  ],
+  "orders": [
+    {
+      "user_mobile": "8668363143",
+      "total_amount": 400,
+      "delivery_slot": "12:00 PM - 1:00 PM",
+      "delivery_date": "2026-01-22",
+      "status": "Delivered",
+      "id": 1,
+      "created_at": "2026-01-21T15:19:59.186Z"
+    }
+  ],
+  "order_items": [
+    {
+      "order_id": 1,
+      "product_id": 1,
+      "product_name": "Test Cake",
+      "quantity": 2,
+      "unit_price": 200,
+      "total_price": 400,
+      "id": 1,
+      "created_at": "2026-01-21T15:19:59.187Z"
+    }
+  ],
+  "payments": [
+    {
+      "order_id": 1,
+      "amount": 400,
+      "status": "Paid",
+      "method": "Cash",
+      "id": 1,
+      "created_at": "2026-01-21T15:19:59.188Z",
+      "amount_paid": 400,
+      "transaction_id": "",
+      "app_name": ""
+    }
+  ],
+  "business_info": [
+    {
+      "name": "SHRI VYENKATESHWARA MESS AND GRUH UDYOG",
+      "address": "D-11, Bomby Park, Jule Solapur",
+      "contact_number": "9511651051",
+      "delivery_charge": 0,
+      "handling_charge": 0,
+      "shop_image_url": "https://www.shutterstock.com/shutterstock/photos/2636983017/display_1500/stock-photo-a-woman-is-making-coffee-in-a-coffee-shop-she-is-smiling-and-seems-to-be-enjoying-her-work-2636983017.jpg",
+      "licence_doc_url": "https://www.shutterstock.com/shutterstock/photos/2475997497/display_1500/stock-photo-approved-stamp-on-application-form-or-business-agreement-document-2475997497.jpg",
+      "open_time": "08:00",
+      "close_time": "22:00",
+      "break_start": "14:00",
+      "break_end": "14:30",
+      "weekly_holiday": "Saturday",
+      "cart_value": 1000,
+      "id": 1,
+      "created_at": "2026-01-21T15:11:19.622Z"
+    },
+    {
+      "name": "SHRI VYENKATESHWARA MESS AND GRUH UDYOG",
+      "address": "D-11, Bomby Park, Jule Solapur",
+      "contact_number": "9511651051",
+      "delivery_charge": 0,
+      "handling_charge": 0,
+      "shop_image_url": "https://www.shutterstock.com/shutterstock/photos/2636983017/display_1500/stock-photo-a-woman-is-making-coffee-in-a-coffee-shop-she-is-smiling-and-seems-to-be-enjoying-her-work-2636983017.jpg",
+      "licence_doc_url": "https://www.shutterstock.com/shutterstock/photos/2475997497/display_1500/stock-photo-approved-stamp-on-application-form-or-business-agreement-document-2475997497.jpg",
+      "open_time": "08:00",
+      "close_time": "22:00",
+      "break_start": "14:00",
+      "break_end": "14:30",
+      "weekly_holiday": "Saturday",
+      "cart_value": 1000,
+      "id": 2,
+      "created_at": "2026-01-21T15:11:28.041Z"
+    }
+  ]
 }

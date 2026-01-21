@@ -1,5 +1,5 @@
 const App = (() => {
-    const API_BASE = 'https://rajacsce.github.io/api';
+    const API_BASE = location.hostname.includes('github.io') ? 'https://your-backend.example.com/api' : 'http://localhost:3000/api';
 
     // State
     let currentUser = null;
@@ -80,4 +80,3 @@ const App = (() => {
         }
     };
 })();
-

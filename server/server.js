@@ -252,6 +252,10 @@ app.post('/api/admin/logout', (req, res) => {
     res.json({ message: 'Logged out' });
 });
 
+// Public endpoint for Business Profile (no auth)
+app.get('/api/admin/business-profile', (req, res) => {
+    res.json(db.getBusinessInfo());
+});
 // Mount admin router
 app.use('/api/admin', adminRouter);
 app.use('/api/dashboard', adminRouter);
@@ -581,9 +585,9 @@ adminRouter.get('/users', (req, res) => {
     res.json(result);
 });
 
-// Admin: Business Profile (GET)
-// Public also access this
-app.get('/api/business-profile', (req, res) => {
+// Public endpoint moved earlier (removed duplicate)
+// Admin: Business Profile (GET) – accessible via /api/admin/business-profile
+adminRouter.get('/business-profile', (req, res) => {
     res.json(db.getBusinessInfo());
 });
 
