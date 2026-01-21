@@ -1,5 +1,5 @@
 const App = (() => {
-    const API_BASE = '/api';
+    const API_BASE = 'https://rajacsce.github.io/api';
 
     // State
     let currentUser = null;
@@ -80,3 +80,4 @@ const App = (() => {
         }
     };
 })();
+
